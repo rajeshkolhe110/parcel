@@ -1,236 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Parcel Letter Generator</title>
+  <meta charset="UTF-8">
+  <title>Parcel Label Generator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Montserrat&family=Open+Sans&display=swap" rel="stylesheet">
   <style>
     body {
+      font-family: 'Roboto', sans-serif;
+      background: #eef1f5;
       margin: 0;
-      font-family: 'Segoe UI', Verdana, sans-serif;
-      background: #eef2f5;
-      padding: 40px 10px;
+      padding: 20px;
     }
 
     .container {
       max-width: 900px;
       margin: auto;
       background: #fff;
-      padding: 30px 40px;
       border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
 
     h2 {
-      text-align: center;
-      margin-bottom: 30px;
-      color: #333;
+      margin-top: 0;
     }
 
     label {
-      font-weight: 600;
-      margin: 10px 0 5px;
+      font-weight: bold;
+      margin-top: 15px;
       display: block;
-      color: #333;
     }
 
-    textarea, select {
+    textarea, select, input {
       width: 100%;
-      padding: 10px 14px;
-      font-family: inherit;
-      font-size: 14px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      box-sizing: border-box;
-      resize: vertical;
-    }
-
-    .form-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
+      padding: 10px;
+      margin-top: 5px;
       margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
     }
 
-    .form-group {
-      flex: 1 1 48%;
-      min-width: 200px;
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
     }
 
-    .btn-row {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
+    .buttons {
+      text-align: center;
       margin-top: 20px;
     }
 
     button {
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: 600;
+      background: #007bff;
+      color: white;
+      padding: 10px 25px;
       border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .print-btn {
-      background-color: #28a745;
-      color: #fff;
-    }
-
-    .print-btn:hover {
-      background-color: #218838;
-    }
-
-    .download-btn {
-      background-color: #0078D4;
-      color: #fff;
-    }
-
-    .download-btn:hover {
-      background-color: #005a9e;
-    }
-
-    #previewArea {
-      margin-top: 40px;
-      padding: 30px;
-      border: 1px solid #ccc;
       border-radius: 8px;
-      background: #fff;
-      font-family: Verdana, sans-serif;
+      font-size: 16px;
+      margin: 0 10px;
+      cursor: pointer;
     }
 
-    @media (max-width: 600px) {
-      .form-row {
-        flex-direction: column;
-      }
+    button:hover {
+      background: #0056b3;
+    }
+
+    .preview-container {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .label-page {
+  position: relative;
+  width: 210mm;
+  height: 297mm;
+  background: white;
+  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+  overflow: hidden;
+}
+
+  .label-content {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 600px;
+  width: calc(100% - 40mm);
+}
+
+
+    .label-content h3 {
+      margin: 0 0 10px;
     }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h2>Parcel Letter Generator</h2>
+  <h2>Parcel Label Generator</h2>
 
-  <label for="toInput">To:</label>
-  <textarea id="toInput" rows="4">Pos Electronics,</textarea>
+  <label>Font Family:</label>
+  <select id="fontFamily">
+    <option value="Times New Roman" selected>Times New Roman</option>
+    <option value="Open Sans">Open Sans</option>
+    <option value="Montserrat">Montserrat</option>
+    <option value="Arial">Arial</option>
+    <option value="Roboto">Georgia</option>
+	<option value="Verdana">Verdana</option>
+	<option value="Agency FB">Agency FB</option>
+	<option value="Calibri">Calibri</option>
+	<option value="Georgia">Georgia</option>
+	
+  </select>
 
-  <label for="fromInput">From:</label>
-  <textarea id="fromInput" rows="4">AutoMekz Electronics,
-Flat 2,Ram Height,Mahale Farm Cidco,Nashik
-Pincode: 422009
-Contact: 9503298303</textarea>
-
-  <div class="form-row">
-    <div class="form-group">
-      <label for="fontSelect">Font</label>
-      <select id="fontSelect">
-        <option value="Verdana" selected>Verdana</option>
-        <option value="Arial">Arial</option>
-        <option value="Times New Roman">Times New Roman</option>
-        <option value="Courier New">Courier New</option>
-      </select>
+  <div class="controls">
+    <div>
+      <label>Font Size (pt):</label>
+      <input type="number" id="fontSize" value="14">
     </div>
-
-    <div class="form-group">
-      <label for="fontSizeSelect">Font Size</label>
-      <select id="fontSizeSelect">
-        <option value="12pt">12 pt</option>
-        <option value="14pt" selected>14 pt</option>
-        <option value="16pt">16 pt</option>
-        <option value="18pt">18 pt</option>
-      </select>
+    <div>
+      <label>Line Spacing:</label>
+      <input type="number" id="lineSpacing" value="1.6" step="0.1">
     </div>
-
-    <div class="form-group">
-      <label for="lineSpacingSelect">Line Spacing</label>
-      <select id="lineSpacingSelect">
-        <option value="1">1</option>
-        <option value="1.2" selected>1.2</option>
-        <option value="1.5">1.5</option>
-        <option value="2">2</option>
-      </select>
+    <div>
+      <label>Letter Spacing (px):</label>
+      <input type="number" id="letterSpacing" value="0.3" step="0.1">
     </div>
-
-    <div class="form-group">
-      <label for="charSpacingSelect">Character Spacing</label>
-      <select id="charSpacingSelect">
-        <option value="0px" selected>Normal</option>
-        <option value="1px">1px</option>
-        <option value="2px">2px</option>
-        <option value="3px">3px</option>
+    <div>
+      <label>Text Position:</label>
+      <select id="textPosition">
+        <option value="flex-start">Top</option>
+        <option value="center" selected>Middle</option>
+        <option value="flex-end">Bottom</option>
       </select>
     </div>
   </div>
 
-  <div class="btn-row">
-    <button class="print-btn" onclick="printPreview()">Print</button>
-    <button class="download-btn" onclick="downloadPDF()">Download PDF</button>
-  </div>
+  <label>To:</label>
+  <textarea id="toText" placeholder="Enter recipient address..."></textarea>
 
-  <div id="previewArea"></div>
+  <label>From:</label>
+  <textarea id="fromText">AutoMekz Electronics,
+Flat No.2 Ram Heights, Laxmi Nagar,
+Mahale Farm, Cidco, Nashik,
+Maharashtra
+Pin code :- 422009
+Contact :- 9503298303</textarea>
+
+  <div class="buttons">
+    <button onclick="updatePreview()">Preview</button>
+    <button onclick="printLabel()">Print</button>
+    <button onclick="downloadPDF()">Save as PDF</button>
+  </div>
+</div>
+
+<div class="preview-container">
+  <div class="label-page" id="labelPreview">
+    <div class="label-content" id="labelContent">
+      <h3>To, </h3>
+      <p id="previewTo"></p>
+      <h3>From,</h3>
+      <p id="previewFrom"></p>
+    </div>
+  </div>
 </div>
 
 <script>
-  function getFormattedContent() {
-    const toText = document.getElementById("toInput").value.trim();
-    const fromText = document.getElementById("fromInput").value.trim();
-    const font = document.getElementById("fontSelect").value;
-    const fontSize = document.getElementById("fontSizeSelect").value;
-    const lineSpacing = document.getElementById("lineSpacingSelect").value;
-    const charSpacing = document.getElementById("charSpacingSelect").value;
+function updatePreview() {
+  const font = document.getElementById("fontFamily").value;
+  const size = document.getElementById("fontSize").value + "pt";
+  const line = document.getElementById("lineSpacing").value;
+  const letter = document.getElementById("letterSpacing").value + "px";
+  const position = document.getElementById("textPosition").value;
 
-    return `
-      <div style="
-        font-family: ${font};
-        font-size: ${fontSize};
-        line-height: ${lineSpacing};
-        letter-spacing: ${charSpacing};
-        white-space: pre-line;
-      ">
-        <strong>To:</strong><br>${toText}<br><br>
-        <strong>From:</strong><br>${fromText}
-      </div>
-    `;
-  }
+  const labelContent = document.getElementById("labelContent");
+  const labelPage = document.getElementById("labelPreview");
 
-  function updatePreview() {
-    document.getElementById("previewArea").innerHTML = getFormattedContent();
-  }
+  // Apply text styles
+  labelContent.style.fontFamily = font;
+  labelContent.style.fontSize = size;
+  labelContent.style.lineHeight = line;
+  labelContent.style.letterSpacing = letter;
 
-  function printPreview() {
+  // Update content
+  const toText = document.getElementById("toText").value.replace(/\n/g, "<br>");
+  const fromText = document.getElementById("fromText").value.replace(/\n/g, "<br>");
+  document.getElementById("previewTo").innerHTML = toText;
+  document.getElementById("previewFrom").innerHTML = fromText;
+
+  // Temporarily show to measure height
+  labelContent.style.visibility = "hidden";
+  labelContent.style.top = "0";
+  labelContent.style.bottom = "auto";
+  labelContent.style.marginTop = "0";
+  labelContent.style.visibility = "visible";
+
+  // Wait for DOM update
+  setTimeout(() => {
+    const contentHeight = labelContent.offsetHeight;
+    const pageHeight = labelPage.offsetHeight;
+
+    if (position === "flex-start") {
+      labelContent.style.top = "30mm";
+    } else if (position === "center") {
+      const offset = (pageHeight - contentHeight) / 2;
+      labelContent.style.top = offset + "px";
+    } else if (position === "flex-end") {
+      const offset = pageHeight - contentHeight - 30; // 30px bottom margin
+      labelContent.style.top = offset + "px";
+    }
+  }, 0);
+}
+
+
+  function printLabel() {
     updatePreview();
-    const printWindow = window.open('', '', 'width=800,height=600');
-    printWindow.document.write('<html><head><title>Print</title></head><body>');
-    printWindow.document.write(getFormattedContent());
-    printWindow.document.write('</body></html>');
+    const printWindow = window.open('', '', 'width=800,height=1000');
+    const content = document.getElementById("labelPreview").innerHTML;
+    printWindow.document.write(`
+      <html><head><title>Print</title>
+      <style>
+        body { margin: 0; font-family: ${document.getElementById("fontFamily").value}; }
+        .label-content { width: 100%; padding: 30mm 20mm; box-sizing: border-box; }
+      </style>
+      </head><body>${content}</body></html>`);
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
   }
 
   function downloadPDF() {
-    updatePreview();
-    const toText = document.getElementById("toInput").value.trim();
-    const fileName = `Parcel_${toText.split("\n")[0].trim()}.pdf`;
+  updatePreview();
 
-    const opt = {
-      margin: 0,
-      filename: fileName,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
+  // Get first word of first line of "To" field
+  const toLines = document.getElementById("toText").value.trim().split('\n');
+  const firstLine = toLines[0] || 'Label';
+  const firstWord = firstLine.split(' ')[0] || 'Label';
+  const filename = `Parcel_${firstWord}.pdf`;
 
-    html2pdf().set(opt).from(document.getElementById("previewArea")).save();
-  }
+  const element = document.getElementById("labelPreview");
+  html2pdf().set({
+    margin: 0,
+    filename: filename,
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+    pagebreak: { mode: ['avoid-all'] }
+  }).from(element).save();
+}
 
-  ["toInput", "fromInput", "fontSelect", "fontSizeSelect", "lineSpacingSelect", "charSpacingSelect"].forEach(id => {
-    document.getElementById(id).addEventListener("input", updatePreview);
-    document.getElementById(id).addEventListener("change", updatePreview);
-  });
-
+  // Load preview on start
   window.onload = updatePreview;
 </script>
 
