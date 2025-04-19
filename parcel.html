@@ -186,8 +186,8 @@ function updatePreview() {
   labelContent.style.letterSpacing = letter;
 
   // Update content
-  const toText = document.getElementById("toText").value.replace(//g, "<br>");
-  const fromText = document.getElementById("fromText").value.replace(//g, "<br>");
+  const toText = document.getElementById("toText").value.replace(/\n/g, "<br>");
+  const fromText = document.getElementById("fromText").value.replace(/\n/g, "<br>");
   document.getElementById("previewTo").innerHTML = toText;
   document.getElementById("previewFrom").innerHTML = fromText;
 
