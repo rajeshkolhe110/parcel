@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AutoMekz 7 Seg Unit Calculator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .calculator {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      color: #444;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .result {
+      margin-top: 25px;
+      padding: 15px;
+      background: #f8f9fa;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+      font-weight: bold;
+      color: #212529;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <h2>AutoMekz Jumbo Display Calculator</h2>
+
+    <label for="model">Select Display Model:</label>
+    <select id="model">
+      <option value="34,24">1.00" (34x24 mm)</option>
+      <option value="69.7,47.8">2.30" (69.7x47.8 mm)</option>
+      <option value="122,90">4.00" (122x90 mm)</option>
+	  <option value="163,111.5">6.00" (183x111.5 mm)</option>
+      <option value="220,142">8.00" (234x142 mm)</option>
+	  <option value="320,160">P10 (320x160 mm)</option>
+    </select>
+
+    
+
+    <label>Columns:</label>
+    <input type="number" id="columns" value="4">
+	
+    <label>Rowgap:</label>
+    <input type="number" id="rowgap" value="0">
+	
+	<label>Rows:</label>
+    <input type="number" id="rows" value="1">
+    <label>Top Frame (mm):</label>
+    <input type="number" id="top" value="25">
+
+    <label>Bottom Frame (mm):</label>
+    <input type="number" id="bottom" value="25">
+
+    <label>Left Frame (mm):</label>
+    <input type="number" id="left" value="25">
+
+    <label>Right Frame (mm):</label>
+    <input type="number" id="right" value="25">
+
+    <button onclick="calculate()">Calculate Dimensions</button>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    function calculate() {
+      const [dispHeight, dispWidth] = document.getElementById("model").value.split(',').map(Number);
+      const rows = parseInt(document.getElementById("rows").value);
+	  const gap = parseFloat(document.getElementById("rowgap").value);
+      const cols = parseInt(document.getElementById("columns").value);
+      const top = parseFloat(document.getElementById("top").value);
+      const bottom = parseFloat(document.getElementById("bottom").value);
+      const left = parseFloat(document.getElementById("left").value);
+      const right = parseFloat(document.getElementById("right").value);
+
+      const totalHeight = (dispHeight * rows) + top + bottom+gap;
+      const totalWidth = (dispWidth * cols) + left + right;
+
+      const heightInches = (totalHeight / 25.4).toFixed(2);
+      const widthInches = (totalWidth / 25.4).toFixed(2);
+
+      document.getElementById("result").innerHTML = `
+        Total Dimensions:<br>
+        Height: ${totalHeight} mm (${heightInches} inches)<br>
+        Width: ${totalWidth} mm (${widthInches} inches)
+      `;
+    }
+  </script>
+</body>
+</html>
