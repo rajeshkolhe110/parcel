@@ -54,7 +54,7 @@
       border: none;
       border-radius: 8px;
       font-size: 16px;
-      margin: 0 10px;
+      margin: 5px;
       cursor: pointer;
     }
     button:hover {
@@ -72,7 +72,7 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      width: 210mm; /* Default to A4 */
+      width: 210mm;
       height: 297mm;
     }
     .label-content {
@@ -85,14 +85,12 @@
     .label-content h3 {
       margin: 0 0 4px 0;
       padding: 0;
-      display: block;
       font-weight: bold;
       line-height: 1.2;
     }
     .label-content p {
       margin: 0;
       padding: 0;
-      display: block;
       white-space: pre-wrap;
     }
   </style>
@@ -102,21 +100,25 @@
   <div class="container">
     <h2>Parcel Label Generator</h2>
 
-    <!-- "To" and "From" Fields -->
-    <div>
-      <label>To:</label>
-      <textarea id="toText" placeholder="Enter recipient address..."></textarea>
+    <!-- To Field with Saved Dropdown -->
+    <label>To:</label>
+    <textarea id="toText" placeholder="Enter recipient address..."></textarea>
+    <label>Saved Addresses:</label>
+    <select id="savedAddresses" onchange="loadSelectedAddress()">
+      <option value="">-- Select a saved address --</option>
+    </select>
+    <button onclick="removeSelectedAddress()" style="background: #dc3545;">🗑️ Remove Selected Address</button>
 
-      <label>From:</label>
-      <textarea id="fromText">AutoMekz Electronics,
+    <!-- From Field -->
+    <label>From:</label>
+    <textarea id="fromText">AutoMekz Electronics,
 Flat No.2 Ram Heights, Laxmi Nagar,
 Mahale Farm, Cidco, Nashik,
 Maharashtra
 Pincode:- 422009
 Contact:- 9503298303/9765300065</textarea>
-    </div>
 
-    <!-- Settings Section (After "To" and "From" Fields) -->
+    <!-- Settings Section -->
     <div class="controls">
       <div>
         <label>Font Family:</label>
@@ -125,7 +127,7 @@ Contact:- 9503298303/9765300065</textarea>
           <option value="Open Sans">Open Sans</option>
           <option value="Montserrat">Montserrat</option>
           <option value="Arial">Arial</option>
-          <option value="Roboto">Georgia</option>
+          <option value="Roboto">Roboto</option>
           <option value="Verdana">Verdana</option>
           <option value="Agency FB">Agency FB</option>
           <option value="Calibri">Calibri</option>
@@ -213,10 +215,7 @@ Contact:- 9503298303/9765300065</textarea>
           <h3>To,</h3>
           <p id="previewTo"></p>
         </div>
-
-        <!-- Gap between "To" and "From" -->
         <div id="gapElement"></div>
-
         <div class="block">
           <h3>From,</h3>
           <p id="previewFrom"></p>
@@ -252,18 +251,11 @@ Contact:- 9503298303/9765300065</textarea>
       document.getElementById("previewTo").innerHTML = toText;
       document.getElementById("previewFrom").innerHTML = fromText;
 
-      // Apply gap between "To" and "From"
-      const gap = parseFloat(gapBetween);
-      const gapElement = document.getElementById("gapElement");
-      gapElement.style.height = gap + "mm";
+      document.getElementById("gapElement").style.height = gapBetween;
 
-      // Apply page rotation
       labelPage.style.transform = `rotate(${pageRotation}deg)`;
-
-      // Apply text rotation
       labelContent.style.transform = `rotate(${textRotation}deg)`;
 
-      // Set page size
       if (pageType === "a4") {
         labelPage.style.width = "210mm";
         labelPage.style.height = "297mm";
@@ -275,8 +267,50 @@ Contact:- 9503298303/9765300065</textarea>
       labelContent.style.visibility = "visible";
     }
 
+    function saveToAddress() {
+      const toValue = document.getElementById("toText").value.trim();
+      if (!toValue) return;
+      let list = JSON.parse(localStorage.getItem('toAddresses') || '[]');
+      if (!list.includes(toValue)) {
+        list.push(toValue);
+        localStorage.setItem('toAddresses', JSON.stringify(list));
+        populateSavedAddresses();
+      }
+    }
+
+    function populateSavedAddresses() {
+      const dropdown = document.getElementById("savedAddresses");
+      const list = JSON.parse(localStorage.getItem('toAddresses') || '[]');
+      dropdown.innerHTML = `<option value="">-- Select a saved address --</option>`;
+      list.forEach(addr => {
+        const opt = document.createElement('option');
+        opt.value = addr;
+        opt.textContent = addr.split('\n')[0]; // show first line
+        dropdown.appendChild(opt);
+      });
+    }
+
+    function loadSelectedAddress() {
+      const val = document.getElementById("savedAddresses").value;
+      document.getElementById("toText").value = val;
+      updatePreview();
+    }
+
+    function removeSelectedAddress() {
+      const dropdown = document.getElementById("savedAddresses");
+      const valueToRemove = dropdown.value;
+      if (!valueToRemove) return alert("Please select an address to remove.");
+      let list = JSON.parse(localStorage.getItem('toAddresses') || '[]');
+      list = list.filter(addr => addr !== valueToRemove);
+      localStorage.setItem('toAddresses', JSON.stringify(list));
+      populateSavedAddresses();
+      document.getElementById("toText").value = "";
+      updatePreview();
+    }
+
     function printLabel() {
       updatePreview();
+      saveToAddress();
       const printWindow = window.open('', '', 'width=800,height=1000');
       const content = document.getElementById("labelPreview").innerHTML;
       printWindow.document.write(`
@@ -293,10 +327,9 @@ Contact:- 9503298303/9765300065</textarea>
 
     function downloadPDF() {
       updatePreview();
+      saveToAddress();
       const toLines = document.getElementById("toText").value.trim().split('\n');
-      const firstLine = toLines[0] || 'Label';
-      const firstWord = firstLine.split(' ')[0] || 'Label';
-      const filename = `Parcel_${firstWord}.pdf`;
+      const filename = `Parcel_${toLines[0].replace(/[^a-zA-Z0-9]/g, '_') || 'Label'}.pdf`;
 
       const element = document.getElementById("labelPreview");
       html2pdf().set({
@@ -308,12 +341,13 @@ Contact:- 9503298303/9765300065</textarea>
       }).from(element).save();
     }
 
-    // Automatically update preview when any input is changed
-    document.querySelectorAll('input, select, textarea').forEach(input => {
-      input.addEventListener('input', updatePreview);
-    });
-
-    window.onload = updatePreview;
+    window.onload = () => {
+      populateSavedAddresses();
+      updatePreview();
+      document.querySelectorAll('input, select, textarea').forEach(input => {
+        input.addEventListener('input', updatePreview);
+      });
+    };
   </script>
 </body>
 </html>
