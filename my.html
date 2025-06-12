@@ -4,350 +4,157 @@
   <meta charset="UTF-8">
   <title>Parcel Label Generator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto&family=Montserrat&family=Open+Sans&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      background: #eef1f5;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: #fff;
-      border-radius: 12px;
-      padding: 30px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-    h2 {
-      margin-top: 0;
-    }
-    label {
-      font-weight: bold;
-      margin-top: 15px;
-      display: block;
-    }
-    textarea, select, input {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      margin-bottom: 15px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-    .controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-top: 20px;
-    }
-    .buttons {
-      text-align: center;
-      margin-top: 20px;
-    }
-    button {
-      background: #007bff;
-      color: white;
-      padding: 10px 25px;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      margin: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-    .preview-container {
-      margin-top: 30px;
-      display: flex;
-      justify-content: center;
-    }
-    .label-page {
-      background: white;
-      box-shadow: 0 0 5px rgba(0,0,0,0.2);
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      width: 210mm;
-      height: 297mm;
-    }
-    .label-content {
-      width: 100%;
-      max-width: 600px;
-      text-align: left;
-      padding: 20mm;
-      visibility: hidden;
-    }
-    .label-content h3 {
-      margin: 0 0 4px 0;
-      padding: 0;
-      font-weight: bold;
-      line-height: 1.2;
-    }
-    .label-content p {
-      margin: 0;
-      padding: 0;
-      white-space: pre-wrap;
-    }
+    body { font-family: 'Arial', sans-serif; background: #eef1f5; padding: 20px; margin: 0; }
+    .container { max-width: 900px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+    label { font-weight: bold; display: block; margin-top: 15px; }
+    textarea, select, input { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border-radius: 6px; font-size: 14px; }
+    .buttons { text-align: center; margin-top: 20px; }
+    button { background: #007bff; color: white; padding: 10px 25px; border: none; border-radius: 8px; font-size: 16px; margin: 0 10px; cursor: pointer; }
+    .preview-container { margin-top: 30px; display: flex; justify-content: center; }
+    .label-page { background: white; box-shadow: 0 0 5px rgba(0,0,0,0.2); width: 210mm; height: 297mm; display: flex; align-items: flex-start; justify-content: center; }
+    .label-content { max-width: 600px; padding: 20mm; text-align: left; visibility: visible; }
+    .label-content h3 { margin: 0 0 4px 0; font-weight: bold; }
+    .label-content p { margin: 0; white-space: pre-wrap; }
   </style>
 </head>
-
 <body>
-  <div class="container">
-    <h2>Parcel Label Generator</h2>
+<div class="container">
+  <h2>Parcel Label Generator</h2>
 
-    <!-- To Field with Saved Dropdown -->
-    <label>To:</label>
-    <textarea id="toText" placeholder="Enter recipient address..."></textarea>
-    <label>Saved Addresses:</label>
-    <select id="savedAddresses" onchange="loadSelectedAddress()">
-      <option value="">-- Select a saved address --</option>
-    </select>
-    <button onclick="removeSelectedAddress()" style="background: #dc3545;">🗑️ Remove Selected Address</button>
+  <label>Saved Addresses:</label>
+  <select id="savedAddresses" onchange="loadSelectedAddress()">
+    <option value="">-- Select Saved Address --</option>
+  </select>
 
-    <!-- From Field -->
-    <label>From:</label>
-    <textarea id="fromText">AutoMekz Electronics,
+  <label>To:</label>
+  <textarea id="toText" placeholder="Enter recipient address..."></textarea>
+
+  <label>From:</label>
+  <textarea id="fromText">AutoMekz Electronics,
 Flat No.2 Ram Heights, Laxmi Nagar,
 Mahale Farm, Cidco, Nashik,
 Maharashtra
 Pincode:- 422009
 Contact:- 9503298303/9765300065</textarea>
 
-    <!-- Settings Section -->
-    <div class="controls">
-      <div>
-        <label>Font Family:</label>
-        <select id="fontFamily">
-          <option value="Times New Roman" selected>Times New Roman</option>
-          <option value="Open Sans">Open Sans</option>
-          <option value="Montserrat">Montserrat</option>
-          <option value="Arial">Arial</option>
-          <option value="Roboto">Roboto</option>
-          <option value="Verdana">Verdana</option>
-          <option value="Agency FB">Agency FB</option>
-          <option value="Calibri">Calibri</option>
-          <option value="Georgia">Georgia</option>
-        </select>
-      </div>
+  <div class="buttons">
+    <button onclick="saveAndPrint()">Print</button>
+    <button onclick="saveAndDownloadPDF()">Save as PDF</button>
+  </div>
+</div>
 
-      <div>
-        <label>Font Size (pt):</label>
-        <input type="number" id="fontSize" value="12">
-      </div>
-
-      <div>
-        <label>Line Spacing:</label>
-        <input type="number" id="lineSpacing" value="0.9" step="0.1">
-      </div>
-
-      <div>
-        <label>Letter Spacing (px):</label>
-        <input type="number" id="letterSpacing" value="0.3" step="0.1">
-      </div>
-
-      <div>
-        <label>Text Position:</label>
-        <select id="textPosition">
-          <option value="flex-start">Top</option>
-          <option value="center" selected>Middle</option>
-          <option value="flex-end">Bottom</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Gap Between "To" and "From" (mm):</label>
-        <input type="number" id="gapBetween" value="10" step="1">
-      </div>
-
-      <div>
-        <label>Page Rotation:</label>
-        <select id="pageRotation">
-          <option value="0">None</option>
-          <option value="90">90°</option>
-          <option value="180">180°</option>
-          <option value="270">270°</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Text Rotation:</label>
-        <select id="textRotation">
-          <option value="0">None</option>
-          <option value="90">90°</option>
-          <option value="180">180°</option>
-          <option value="270">270°</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Text Alignment:</label>
-        <select id="textAlign">
-          <option value="left" selected>Left</option>
-          <option value="center">Center</option>
-          <option value="right">Right</option>
-        </select>
-      </div>
-
-      <div>
-        <label>Page Type:</label>
-        <select id="pageType">
-          <option value="a4" selected>A4</option>
-          <option value="letter">Letter</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="buttons">
-      <button onclick="printLabel()">Print</button>
-      <button onclick="downloadPDF()">Save as PDF</button>
+<div class="preview-container">
+  <div class="label-page" id="labelPreview">
+    <div class="label-content" id="labelContent">
+      <div><h3>To,</h3><p id="previewTo"></p></div>
+      <div style="height:10mm;"></div>
+      <div><h3>From,</h3><p id="previewFrom"></p></div>
     </div>
   </div>
+</div>
 
-  <div class="preview-container">
-    <div class="label-page" id="labelPreview">
-      <div class="label-content" id="labelContent">
-        <div class="block">
-          <h3>To,</h3>
-          <p id="previewTo"></p>
-        </div>
-        <div id="gapElement"></div>
-        <div class="block">
-          <h3>From,</h3>
-          <p id="previewFrom"></p>
-        </div>
-      </div>
-    </div>
-  </div>
+<script>
+  const GIST_ID = 'YOUR_GIST_ID'; // Replace this
+  const GITHUB_TOKEN = 'YOUR_GITHUB_TOKEN'; // Replace this
+  const API_URL = `https://api.github.com/gists/${GIST_ID}`;
 
-  <script>
-    function updatePreview() {
-      const font = document.getElementById("fontFamily").value;
-      const size = document.getElementById("fontSize").value + "pt";
-      const line = document.getElementById("lineSpacing").value;
-      const letter = document.getElementById("letterSpacing").value + "px";
-      const position = document.getElementById("textPosition").value;
-      const gapBetween = document.getElementById("gapBetween").value + "mm";
-      const pageRotation = document.getElementById("pageRotation").value;
-      const textRotation = document.getElementById("textRotation").value;
-      const textAlign = document.getElementById("textAlign").value;
-      const pageType = document.getElementById("pageType").value;
-
-      const labelContent = document.getElementById("labelContent");
-      const labelPage = document.getElementById("labelPreview");
-
-      labelContent.style.fontFamily = font;
-      labelContent.style.fontSize = size;
-      labelContent.style.lineHeight = line;
-      labelContent.style.letterSpacing = letter;
-      labelContent.style.textAlign = textAlign;
-
-      const toText = document.getElementById("toText").value.replace(/\n/g, "<br>");
-      const fromText = document.getElementById("fromText").value.replace(/\n/g, "<br>");
-      document.getElementById("previewTo").innerHTML = toText;
-      document.getElementById("previewFrom").innerHTML = fromText;
-
-      document.getElementById("gapElement").style.height = gapBetween;
-
-      labelPage.style.transform = `rotate(${pageRotation}deg)`;
-      labelContent.style.transform = `rotate(${textRotation}deg)`;
-
-      if (pageType === "a4") {
-        labelPage.style.width = "210mm";
-        labelPage.style.height = "297mm";
-      } else {
-        labelPage.style.width = "216mm";
-        labelPage.style.height = "279mm";
-      }
-
-      labelContent.style.visibility = "visible";
-    }
-
-    function saveToAddress() {
-      const toValue = document.getElementById("toText").value.trim();
-      if (!toValue) return;
-      let list = JSON.parse(localStorage.getItem('toAddresses') || '[]');
-      if (!list.includes(toValue)) {
-        list.push(toValue);
-        localStorage.setItem('toAddresses', JSON.stringify(list));
-        populateSavedAddresses();
-      }
-    }
-
-    function populateSavedAddresses() {
-      const dropdown = document.getElementById("savedAddresses");
-      const list = JSON.parse(localStorage.getItem('toAddresses') || '[]');
-      dropdown.innerHTML = `<option value="">-- Select a saved address --</option>`;
-      list.forEach(addr => {
-        const opt = document.createElement('option');
-        opt.value = addr;
-        opt.textContent = addr.split('\n')[0]; // show first line
-        dropdown.appendChild(opt);
+  async function loadAddresses() {
+    try {
+      const res = await fetch(API_URL, {
+        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
       });
+      const data = await res.json();
+      const content = data.files['parcel-addresses.json'].content;
+      const parsed = JSON.parse(content);
+      populateDropdown(parsed.addresses || []);
+    } catch (err) {
+      console.error("Failed to load addresses:", err);
     }
+  }
 
-    function loadSelectedAddress() {
-      const val = document.getElementById("savedAddresses").value;
-      document.getElementById("toText").value = val;
-      updatePreview();
-    }
+  function populateDropdown(addresses) {
+    const dropdown = document.getElementById('savedAddresses');
+    dropdown.innerHTML = `<option value="">-- Select Saved Address --</option>`;
+    addresses.forEach(addr => {
+      const opt = document.createElement('option');
+      opt.value = addr;
+      opt.textContent = addr.split('\n')[0];
+      dropdown.appendChild(opt);
+    });
+  }
 
-    function removeSelectedAddress() {
-      const dropdown = document.getElementById("savedAddresses");
-      const valueToRemove = dropdown.value;
-      if (!valueToRemove) return alert("Please select an address to remove.");
-      let list = JSON.parse(localStorage.getItem('toAddresses') || '[]');
-      list = list.filter(addr => addr !== valueToRemove);
-      localStorage.setItem('toAddresses', JSON.stringify(list));
-      populateSavedAddresses();
-      document.getElementById("toText").value = "";
-      updatePreview();
-    }
+  function loadSelectedAddress() {
+    const val = document.getElementById('savedAddresses').value;
+    if (val) document.getElementById('toText').value = val;
+    updatePreview();
+  }
 
-    function printLabel() {
-      updatePreview();
-      saveToAddress();
-      const printWindow = window.open('', '', 'width=800,height=1000');
-      const content = document.getElementById("labelPreview").innerHTML;
-      printWindow.document.write(`
-        <html><head><title>Print</title>
-        <style>
-          body { margin: 0; font-family: ${document.getElementById("fontFamily").value}; }
-          .label-content { width: 100%; padding: 30mm 20mm; box-sizing: border-box; text-align: ${document.getElementById("textAlign").value}; }
-        </style>
-        </head><body>${content}</body></html>`);
-      printWindow.document.close();
-      printWindow.focus();
-      printWindow.print();
-    }
+  function updatePreview() {
+    document.getElementById("previewTo").innerHTML = document.getElementById("toText").value.replace(/\n/g, "<br>");
+    document.getElementById("previewFrom").innerHTML = document.getElementById("fromText").value.replace(/\n/g, "<br>");
+  }
 
-    function downloadPDF() {
-      updatePreview();
-      saveToAddress();
-      const toLines = document.getElementById("toText").value.trim().split('\n');
-      const filename = `Parcel_${toLines[0].replace(/[^a-zA-Z0-9]/g, '_') || 'Label'}.pdf`;
-
-      const element = document.getElementById("labelPreview");
-      html2pdf().set({
-        margin: 0,
-        filename: filename,
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all'] }
-      }).from(element).save();
-    }
-
-    window.onload = () => {
-      populateSavedAddresses();
-      updatePreview();
-      document.querySelectorAll('input, select, textarea').forEach(input => {
-        input.addEventListener('input', updatePreview);
+  async function saveAddressIfNew() {
+    const newAddr = document.getElementById("toText").value.trim();
+    if (!newAddr) return;
+    try {
+      const res = await fetch(API_URL, {
+        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
       });
-    };
-  </script>
+      const data = await res.json();
+      const file = data.files['parcel-addresses.json'];
+      const addresses = JSON.parse(file.content).addresses || [];
+      if (!addresses.includes(newAddr)) {
+        addresses.push(newAddr);
+        await fetch(API_URL, {
+          method: "PATCH",
+          headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            files: {
+              'parcel-addresses.json': {
+                content: JSON.stringify({ addresses }, null, 2)
+              }
+            }
+          })
+        });
+      }
+    } catch (err) {
+      console.error("Failed to save address:", err);
+    }
+  }
+
+  async function saveAndPrint() {
+    await saveAddressIfNew();
+    updatePreview();
+    const printWindow = window.open('', '', 'width=800,height=1000');
+    printWindow.document.write(`<html><head><title>Print</title></head><body>${document.getElementById("labelPreview").innerHTML}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  }
+
+  async function saveAndDownloadPDF() {
+    await saveAddressIfNew();
+    updatePreview();
+    const toLines = document.getElementById("toText").value.trim().split('\n');
+    const filename = `Parcel_${(toLines[0] || 'Label').split(' ')[0]}.pdf`;
+    html2pdf().set({
+      margin: 0,
+      filename: filename,
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(document.getElementById("labelPreview")).save();
+  }
+
+  window.onload = () => {
+    updatePreview();
+    loadAddresses();
+  };
+</script>
 </body>
 </html>
+
