@@ -236,21 +236,22 @@ Contact:- 9503298303/9765300065</textarea>
       saveAddressOnce();
       window.print();
     }
-
-    function downloadPDF() {
+   function downloadPDF() {
       updatePreview();
       saveAddressOnce();
-      const firstLine = document.getElementById("toText").value.split('\n')[0] || "Label";
-      const filename = `Parcel_${firstLine.split(' ')[0]}.pdf`;
+      const toLines = document.getElementById("toText").value.trim().split('\n');
+      const firstLine = toLines[0] || 'Label';
+      const firstWord = firstLine.split(' ')[0] || 'Label';
+      const filename = `Parcel_${firstWord}.pdf`;
 
+      const element = document.getElementById("labelPreview");
       html2pdf().set({
         margin: 0,
         filename: filename,
         html2canvas: { scale: 2 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      }).from(document.getElementById("labelPreview")).save();
-    }
-
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all'] }
+      }).from(element).save();
     // Live update preview
     document.querySelectorAll("input, select, textarea").forEach(el => {
       el.addEventListener("input", updatePreview);
