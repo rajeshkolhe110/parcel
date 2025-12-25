@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
 
 <style>
+/* ================= UI ================= */
 body {
   font-family: Roboto, sans-serif;
   background: #eef1f5;
@@ -36,11 +37,12 @@ textarea, input, select {
   margin-bottom: 14px;
   border-radius: 6px;
   border: 1px solid #ccc;
+  font-size: 14px;
 }
 
 .controls {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
   gap: 14px;
 }
 
@@ -66,19 +68,19 @@ button:hover { background:#0056b3; }
   justify-content: center;
 }
 
-/* ===== LABEL (NO A4 HEIGHT HERE) ===== */
+/* ============ LABEL (NO A4 HEIGHT) ============ */
 .label-page {
   width: 210mm;          /* Width only */
   background: white;
 }
 
 .label-content {
-  padding: 60px;         /* px ONLY */
+  padding: 60px;         /* px ONLY (important) */
   box-sizing: border-box;
 }
 
 .label-content h3 {
-  margin: 0 0 6px 0;     /* Controlled margins */
+  margin: 0 0 6px 0;
   font-weight: bold;
 }
 
@@ -87,7 +89,7 @@ button:hover { background:#0056b3; }
   white-space: pre-wrap;
 }
 
-/* Print safety */
+/* ============ PRINT SAFETY ============ */
 @media print {
   body { background:none; padding:0; }
   .container { display:none; }
@@ -105,7 +107,7 @@ button:hover { background:#0056b3; }
 <select id="savedAddresses" onchange="loadSavedAddress()">
   <option value="">-- Select Saved Address --</option>
 </select>
-<textarea id="toText"></textarea>
+<textarea id="toText" placeholder="Enter recipient address"></textarea>
 
 <label>From:</label>
 <textarea id="fromText">AutoMekz Electronics,
@@ -113,7 +115,7 @@ Flat No.2 Ram Heights, Laxmi Nagar,
 Mahale Farm, Cidco, Nashik,
 Maharashtra
 Pincode:- 422009
-Contact:- 9503298303</textarea>
+Contact:- 9503298303 / 9765300065</textarea>
 
 <div class="controls">
   <div>
@@ -157,21 +159,90 @@ Contact:- 9503298303</textarea>
 </div>
 
 <script>
+/* ================= STORAGE ================= */
+const STORAGE_KEY = "parcel_saved_addresses_v1";
+const LEGACY_KEYS = ["savedToAddresses", "addr"];
+
+/* Restore old saved addresses */
+function migrateOldAddresses() {
+  let merged = [];
+
+  const current = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  merged.push(...current);
+
+  LEGACY_KEYS.forEach(k => {
+    const old = JSON.parse(localStorage.getItem(k) || "[]");
+    merged.push(...old);
+  });
+
+  const unique = [];
+  merged.forEach(a => {
+    if (a && !unique.some(u => u.toLowerCase() === a.toLowerCase())) {
+      unique.push(a);
+    }
+  });
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
+}
+
+/* ================= PREVIEW ================= */
 function updatePreview() {
-  const lc = labelContent;
-  lc.style.fontFamily = fontFamily.value;
-  lc.style.fontSize = fontSize.value + "pt";
-  lc.style.lineHeight = lineSpacing.value;
+  labelContent.style.fontFamily = fontFamily.value;
+  labelContent.style.fontSize = fontSize.value + "pt";
+  labelContent.style.lineHeight = lineSpacing.value;
   gap.style.height = gapBetween.value + "px";
 
   previewTo.textContent = toText.value;
   previewFrom.textContent = fromText.value;
 }
 
+/* ================= ADDRESS BOOK ================= */
+function saveAddress() {
+  const txt = toText.value.trim();
+  if (!txt) return;
+
+  let arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  if (!arr.some(a => a.toLowerCase() === txt.toLowerCase())) {
+    arr.push(txt);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+  loadList();
+}
+
+function loadList() {
+  savedAddresses.innerHTML =
+    `<option value="">-- Select Saved Address --</option>`;
+
+  const search = toSearch.value.toLowerCase();
+  const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+
+  arr.forEach((a, i) => {
+    const first = a.trim().split(/\s+/)[0].toLowerCase();
+    if (!search || first.includes(search)) {
+      const o = document.createElement("option");
+      o.value = i;
+      o.textContent = a.split("\n")[0];
+      savedAddresses.appendChild(o);
+    }
+  });
+}
+
+function loadSavedAddress() {
+  const i = savedAddresses.value;
+  if (i === "") return;
+
+  const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  toText.value = arr[i];
+  updatePreview();
+}
+
+/* ================= PDF ================= */
 function savePDF() {
   updatePreview();
+  saveAddress();
+
   html2pdf().set({
-    margin: 10,   // jsPDF margin controls page
+    margin: 10,
     html2canvas: { scale: 2 },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     pagebreak: { mode: "avoid-all" }
@@ -180,23 +251,34 @@ function savePDF() {
 
 function printPDF() {
   updatePreview();
+  saveAddress();
+
   html2pdf().set({
     margin: 10,
     html2canvas: { scale: 2 },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     pagebreak: { mode: "avoid-all" }
-  }).from(labelPage).outputPdf("blob").then(b=>{
-    const u=URL.createObjectURL(b);
-    const w=window.open(u);
-    w.onload=()=>{w.print();};
+  }).from(labelPage).outputPdf("blob").then(blob => {
+    const url = URL.createObjectURL(blob);
+    const w = window.open(url);
+    if (w) {
+      w.onload = () => w.print();
+    }
   });
 }
 
+/* ================= EVENTS ================= */
 document.querySelectorAll("input,textarea,select")
-  .forEach(e=>e.addEventListener("input",updatePreview));
+  .forEach(e => e.addEventListener("input", updatePreview));
 
-window.onload = updatePreview;
+toSearch.addEventListener("input", loadList);
+
+window.onload = () => {
+  migrateOldAddresses();   // restores ALL old entries
+  loadList();
+  updatePreview();
+};
 </script>
 
 </body>
-    </html>
+</html>
