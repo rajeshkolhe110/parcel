@@ -466,46 +466,39 @@ function printPDF(){
 }
 
 /* safety image pdf */
+
 function saveSafetyPDF(){
 
-  const page =
-    document.getElementById("safetyPage");
+  const { jsPDF } = window.jspdf;
 
-  page.style.display = "block";
-
-  html2pdf().set({
-
-    margin:0,
-
-    filename:"Handle_With_Care.pdf",
-
-    image:{
-      type:"jpeg",
-      quality:1
-    },
-
-    html2canvas:{
-      scale:2,
-      useCORS:true,
-      scrollX:0,
-      scrollY:0
-    },
-
-    jsPDF:{
-      unit:"pt",
-      format:"a4",
-      orientation:"portrait"
-    },
-
-    pagebreak:{
-      mode:[]
-    }
-
-  }).from(page).save().then(function(){
-
-    page.style.display = "none";
-
+  const doc = new jsPDF({
+    orientation:"portrait",
+    unit:"pt",
+    format:"a4"
   });
+
+  const img = new Image();
+
+  img.onload = function(){
+
+    /* Exact A4 size in points */
+    doc.addImage(
+      img,
+      "JPEG",
+      0,
+      0,
+      595.28,
+      841.89
+    );
+
+    doc.save("Handle_With_Care.pdf");
+  };
+
+  img.onerror = function(){
+    alert("Image not found: IMG-20260424-WA0007.jpg");
+  };
+
+  img.src = "IMG-20260424-WA0007.jpg";
 }
 
 /* events */
