@@ -3,11 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Parcel Label Generator Stable</title>
+<title>Parcel Label Generator Final</title>
 
+<!-- html2pdf only for safety image -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Poppins:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Noto+Serif:wght@400;700&family=Merriweather:wght@400;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<!-- jsPDF direct engine for parcel label -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins&family=Open+Sans&family=Lato&family=Montserrat&family=Noto+Serif&family=Merriweather&family=Courier+Prime&display=swap" rel="stylesheet">
 
 <style>
 *{
@@ -24,7 +28,7 @@ body{
 .container{
   max-width:920px;
   margin:auto;
-  background:#ffffff;
+  background:#fff;
   padding:28px;
   border-radius:12px;
   box-shadow:0 10px 25px rgba(0,0,0,.10);
@@ -46,7 +50,7 @@ input,
 select{
   width:100%;
   padding:10px;
-  border:1px solid #cfcfcf;
+  border:1px solid #ccc;
   border-radius:8px;
   font-size:14px;
   outline:none;
@@ -61,7 +65,7 @@ textarea{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
   gap:14px;
-  margin-top:8px;
+  margin-top:10px;
 }
 
 .buttons{
@@ -76,9 +80,9 @@ button{
   border-radius:8px;
   padding:12px 18px;
   color:#fff;
-  cursor:pointer;
   font-size:14px;
   font-weight:700;
+  cursor:pointer;
 }
 
 button:hover{
@@ -89,85 +93,40 @@ button:hover{
 .green{ background:#11863d; }
 .red{ background:#d70000; }
 
-.preview-wrap{
+.preview{
   margin-top:30px;
-  display:flex;
-  justify-content:center;
+  background:#fff;
+  padding:50px;
+  border-radius:10px;
+  box-shadow:0 0 10px rgba(0,0,0,.06);
 }
 
-.preview-note{
-  text-align:center;
+.preview h3{
+  margin:0 0 8px 0;
+}
+
+#previewTo,
+#previewFrom{
+  white-space:pre-wrap;
+}
+
+.note{
+  margin-top:10px;
   color:#666;
   font-size:12px;
-  margin-top:10px;
 }
 
-/* Stable A4 canvas = 794 x 1123 px */
-.page{
-  width:794px;
-  height:1123px;
-  min-height:1123px;
-  max-height:1123px;
-  overflow:hidden;
-  background:#ffffff;
-  display:block;
-  position:relative;
-  margin:0;
-  padding:0;
-}
-
-
-/* Parcel page */
-#labelPage{
-  position:relative;
-}
-
-.label-inner{
-  padding:58px;
-  width:100%;
-  height:100%;
-}
-
-.label-inner h3{
-  margin:0 0 8px 0;
-  font-size:30px;
-}
-
-.label-inner .text{
-  white-space:pre-wrap;
-  word-break:break-word;
-}
-
-/* Safety image page */
 #safetyPage{
   display:none;
+  width:794px;
+  height:1123px;
   background:#fff url('IMG-20260424-WA0007.jpg') no-repeat center center;
   background-size:100% 100%;
 }
 
-@media(max-width:860px){
-
-  .page{
-    width:100%;
-    height:auto;
-    aspect-ratio:794 / 1123;
-  }
-
+@media(max-width:700px){
   .buttons{
     flex-direction:column;
-  }
-}
-
-@media print{
-  body{
-    background:#fff;
-    padding:0;
-  }
-
-  .container,
-  .preview-wrap,
-  .preview-note{
-    display:none !important;
   }
 }
 </style>
@@ -180,6 +139,7 @@ button:hover{
 <h2>Parcel Label Generator</h2>
 
 <label>To:</label>
+
 <input id="toSearch" placeholder="Search saved address">
 
 <select id="savedAddresses" onchange="loadSavedAddress()">
@@ -202,21 +162,14 @@ Contact:- 9503298303 / 9765300065</textarea>
 <div>
 <label>Font</label>
 <select id="fontFamily">
-<option value="Roboto" selected>Roboto</option>
-<option value="Arial">Arial</option>
-<option value="Times New Roman">Times New Roman</option>
-<option value="Poppins">Poppins</option>
-<option value="Open Sans">Open Sans</option>
-<option value="Lato">Lato</option>
-<option value="Montserrat">Montserrat</option>
-<option value="Noto Serif">Noto Serif</option>
-<option value="Merriweather">Merriweather</option>
-<option value="Courier Prime">Courier Prime</option>
+<option value="helvetica" selected>Roboto / Arial</option>
+<option value="times">Times</option>
+<option value="courier">Courier</option>
 </select>
 </div>
 
 <div>
-<label>Font Size (pt)</label>
+<label>Font Size</label>
 <input type="number" id="fontSize" value="18">
 </div>
 
@@ -226,7 +179,7 @@ Contact:- 9503298303 / 9765300065</textarea>
 </div>
 
 <div>
-<label>Gap (px)</label>
+<label>Gap</label>
 <input type="number" id="gapBetween" value="26">
 </div>
 
@@ -238,48 +191,47 @@ Contact:- 9503298303 / 9765300065</textarea>
 <button class="red" onclick="saveSafetyPDF()">Safety Label PDF</button>
 </div>
 
-</div>
-
-<div class="preview-wrap">
-<div class="page" id="labelPage">
-
-<div class="label-inner" id="labelInner">
+<div class="preview">
 
 <h3>To,</h3>
-<div class="text" id="previewTo"></div>
+<div id="previewTo"></div>
 
 <div id="gap"></div>
 
 <h3>From,</h3>
-<div class="text" id="previewFrom"></div>
+<div id="previewFrom"></div>
 
 </div>
 
-</div>
+<div class="note">
+Parcel PDF uses direct jsPDF engine (single page stable)
 </div>
 
-<div class="preview-note">Stable A4 engine • Optimized for mobile PDF</div>
+</div>
 
 <!-- hidden safety page -->
-<div class="page" id="safetyPage"></div>
+<div id="safetyPage"></div>
 
 <script>
-const STORAGE_KEY = "parcel_saved_addresses_v2";
+const STORAGE_KEY = "parcel_saved_addresses_final";
 const LEGACY_KEYS = [
+  "parcel_saved_addresses_v2",
   "parcel_saved_addresses_v1",
   "savedToAddresses",
   "addr"
 ];
 
-/* ---------------- migrate ---------------- */
+/* migrate */
 function migrateOld(){
 
   let merged = [];
 
   LEGACY_KEYS.forEach(function(k){
+
     try{
       merged.push(...JSON.parse(localStorage.getItem(k) || "[]"));
     }catch(e){}
+
   });
 
   const unique = [];
@@ -299,31 +251,32 @@ function migrateOld(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
 }
 
-/* ---------------- preview ---------------- */
+/* preview */
 function updatePreview(){
-
-  const wrap = document.getElementById("labelInner");
-
-  wrap.style.fontFamily =
-    document.getElementById("fontFamily").value;
-
-  wrap.style.fontSize =
-    document.getElementById("fontSize").value + "pt";
-
-  wrap.style.lineHeight =
-    document.getElementById("lineSpacing").value;
-
-  document.getElementById("gap").style.height =
-    document.getElementById("gapBetween").value + "px";
 
   document.getElementById("previewTo").textContent =
     document.getElementById("toText").value;
 
   document.getElementById("previewFrom").textContent =
     document.getElementById("fromText").value;
+
+  document.getElementById("previewTo").style.fontSize =
+    document.getElementById("fontSize").value + "pt";
+
+  document.getElementById("previewFrom").style.fontSize =
+    document.getElementById("fontSize").value + "pt";
+
+  document.getElementById("previewTo").style.lineHeight =
+    document.getElementById("lineSpacing").value;
+
+  document.getElementById("previewFrom").style.lineHeight =
+    document.getElementById("lineSpacing").value;
+
+  document.getElementById("gap").style.height =
+    document.getElementById("gapBetween").value + "px";
 }
 
-/* ---------------- address save ---------------- */
+/* save address */
 function saveAddress(){
 
   const txt =
@@ -352,7 +305,7 @@ function saveAddress(){
   loadList();
 }
 
-/* ---------------- list ---------------- */
+/* list */
 function loadList(){
 
   const sel =
@@ -389,7 +342,7 @@ function loadList(){
   });
 }
 
-/* ---------------- load selected ---------------- */
+/* load selected */
 function loadSavedAddress(){
 
   const i =
@@ -409,15 +362,122 @@ function loadSavedAddress(){
   updatePreview();
 }
 
-/* ---------------- engine ---------------- */
+/* create parcel pdf */
+function buildParcelDoc(){
 
-function makePDF(node,fileName){
+  const { jsPDF } = window.jspdf;
 
-  return html2pdf().set({
+  const doc = new jsPDF({
+    orientation:"portrait",
+    unit:"pt",
+    format:"a4"
+  });
 
-    margin:[0,0,0,0],
+  const left = 40;
+  const top = 45;
+  const usableW = 595.28 - 80;
 
-    filename:fileName,
+  const font =
+    document.getElementById("fontFamily").value;
+
+  const fontSize =
+    parseInt(document.getElementById("fontSize").value) || 18;
+
+  const lineSpacing =
+    parseFloat(document.getElementById("lineSpacing").value) || 1.15;
+
+  const gap =
+    parseInt(document.getElementById("gapBetween").value) || 26;
+
+  const toText =
+    document.getElementById("toText").value.trim();
+
+  const fromText =
+    document.getElementById("fromText").value.trim();
+
+  let y = top;
+
+  doc.setFont(font,"bold");
+  doc.setFontSize(fontSize + 4);
+  doc.text("To,", left, y);
+
+  y += 24;
+
+  doc.setFont(font,"normal");
+  doc.setFontSize(fontSize);
+
+  const toLines =
+    doc.splitTextToSize(toText, usableW);
+
+  doc.text(toLines, left, y, {
+    lineHeightFactor: lineSpacing
+  });
+
+  y += toLines.length * fontSize * lineSpacing + gap;
+
+  doc.setFont(font,"bold");
+  doc.setFontSize(fontSize + 4);
+  doc.text("From,", left, y);
+
+  y += 24;
+
+  doc.setFont(font,"normal");
+  doc.setFontSize(fontSize);
+
+  const fromLines =
+    doc.splitTextToSize(fromText, usableW);
+
+  doc.text(fromLines, left, y, {
+    lineHeightFactor: lineSpacing
+  });
+
+  return doc;
+}
+
+/* save parcel */
+function savePDF(){
+
+  saveAddress();
+  updatePreview();
+
+  const doc = buildParcelDoc();
+
+  doc.save("Parcel_Label.pdf");
+}
+
+/* print parcel */
+function printPDF(){
+
+  saveAddress();
+  updatePreview();
+
+  const doc = buildParcelDoc();
+
+  const blob = doc.output("blob");
+  const url = URL.createObjectURL(blob);
+
+  const w = window.open(url);
+
+  if(w){
+    w.onload = function(){
+      w.print();
+    };
+  }
+}
+
+/* safety image pdf */
+function saveSafetyPDF(){
+
+  const page =
+    document.getElementById("safetyPage");
+
+  page.style.display = "block";
+
+  html2pdf().set({
+
+    margin:0,
+
+    filename:"Handle_With_Care.pdf",
 
     image:{
       type:"jpeg",
@@ -428,14 +488,12 @@ function makePDF(node,fileName){
       scale:2,
       useCORS:true,
       scrollX:0,
-      scrollY:0,
-      windowWidth:794,
-      windowHeight:1123
+      scrollY:0
     },
 
     jsPDF:{
       unit:"pt",
-      format:[595.28,841.89],
+      format:"a4",
       orientation:"portrait"
     },
 
@@ -443,65 +501,14 @@ function makePDF(node,fileName){
       mode:[]
     }
 
-  }).from(node);
-
-}
-  
-/* ---------------- parcel save ---------------- */
-function savePDF(){
-
-  updatePreview();
-  saveAddress();
-
-  makePDF(
-    document.getElementById("labelPage"),
-    "Parcel_Label.pdf"
-  ).save();
-}
-
-/* ---------------- parcel print ---------------- */
-function printPDF(){
-
-  updatePreview();
-  saveAddress();
-
-  makePDF(
-    document.getElementById("labelPage"),
-    "Parcel_Label.pdf"
-  ).outputPdf("blob")
-   .then(function(blob){
-
-      const url = URL.createObjectURL(blob);
-      const w = window.open(url);
-
-      if(w){
-        w.onload = function(){
-          w.print();
-        };
-      }
-
-   });
-}
-
-/* ---------------- safety ---------------- */
-function saveSafetyPDF(){
-
-  const page =
-    document.getElementById("safetyPage");
-
-  page.style.display = "block";
-
-  makePDF(
-    page,
-    "Handle_With_Care.pdf"
-  ).save().then(function(){
+  }).from(page).save().then(function(){
 
     page.style.display = "none";
 
   });
 }
 
-/* ---------------- events ---------------- */
+/* events */
 document.querySelectorAll(
   "input,textarea,select"
 ).forEach(function(el){
@@ -516,7 +523,7 @@ document.querySelectorAll(
 document.getElementById("toSearch")
 .addEventListener("input", loadList);
 
-/* ---------------- init ---------------- */
+/* init */
 window.onload = function(){
 
   migrateOld();
