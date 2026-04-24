@@ -1,159 +1,558 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Parcel Label Generator</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <style>
-    body { font-family: 'Arial', sans-serif; background: #eef1f5; padding: 20px; margin: 0; }
-    .container { max-width: 900px; margin: auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-    label { font-weight: bold; display: block; margin-top: 15px; }
-    textarea, select, input { width: 100%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border-radius: 6px; font-size: 14px; }
-    .buttons { text-align: center; margin-top: 20px; }
-    button { background: #007bff; color: white; padding: 10px 25px; border: none; border-radius: 8px; font-size: 16px; margin: 0 10px; cursor: pointer; }
-    .preview-container { margin-top: 30px; display: flex; justify-content: center; }
-    .label-page { background: white; box-shadow: 0 0 5px rgba(0,0,0,0.2); width: 210mm; height: 297mm; display: flex; align-items: flex-start; justify-content: center; }
-    .label-content { max-width: 600px; padding: 20mm; text-align: left; visibility: visible; }
-    .label-content h3 { margin: 0 0 4px 0; font-weight: bold; }
-    .label-content p { margin: 0; white-space: pre-wrap; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parcel Label Generator + Safety Label</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Poppins:wght@400;700&family=Open+Sans:wght@400;700&family=Lato:wght@400;700&family=Montserrat:wght@400;700&family=Noto+Serif:wght@400;700&family=Merriweather:wght@400;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  padding:20px;
+  background:#eef1f5;
+  font-family:Roboto,sans-serif;
+}
+
+.container{
+  max-width:920px;
+  margin:auto;
+  background:#fff;
+  border-radius:14px;
+  padding:28px;
+  box-shadow:0 10px 25px rgba(0,0,0,.10);
+}
+
+h2{
+  margin-top:0;
+  margin-bottom:20px;
+}
+
+label{
+  display:block;
+  margin-top:12px;
+  margin-bottom:6px;
+  font-weight:700;
+}
+
+textarea,
+input,
+select{
+  width:100%;
+  padding:10px;
+  border:1px solid #cfcfcf;
+  border-radius:8px;
+  font-size:14px;
+  outline:none;
+}
+
+textarea{
+  min-height:120px;
+  resize:vertical;
+}
+
+.controls{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;
+  margin-top:10px;
+}
+
+.buttons{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin-top:20px;
+}
+
+button{
+  border:none;
+  border-radius:8px;
+  padding:12px 20px;
+  cursor:pointer;
+  color:#fff;
+  font-size:14px;
+  font-weight:700;
+}
+
+button:hover{
+  opacity:.92;
+}
+
+.btn-blue{ background:#007bff; }
+.btn-green{ background:#0a8f3d; }
+.btn-red{ background:#d60000; }
+
+.preview-wrap{
+  margin-top:28px;
+  display:flex;
+  justify-content:center;
+}
+
+.label-page{
+  width:210mm;
+  min-height:297mm;
+  background:#fff;
+  box-shadow:0 0 10px rgba(0,0,0,.08);
+}
+
+.label-content{
+  padding:60px;
+}
+
+.label-content h3{
+  margin:0 0 8px 0;
+}
+
+.label-content p{
+  margin:0;
+  white-space:pre-wrap;
+}
+
+/* Hidden safety page */
+#safetyPage{
+  display:none;
+  width:210mm;
+  min-height:297mm;
+  background:#fff;
+}
+
+.safety-grid{
+  width:210mm;
+  min-height:297mm;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;
+  gap:8mm;
+  padding:8mm;
+}
+
+.safe-card{
+  border:3px solid #d60000;
+  border-radius:14px;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+.safe-top{
+  background:#d60000;
+  color:#fff;
+  text-align:center;
+  font-weight:700;
+  font-size:24px;
+  line-height:1.1;
+  padding:18px 10px;
+}
+
+.safe-mid{
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+  padding:12px;
+  text-align:center;
+}
+
+.safe-hands{
+  font-size:88px;
+  line-height:1;
+}
+
+.safe-up{
+  font-size:52px;
+  line-height:1;
+}
+
+.safe-text{
+  margin-top:10px;
+  font-size:28px;
+  font-weight:700;
+}
+
+.safe-bottom{
+  background:#000;
+  color:#fff;
+  text-align:center;
+  padding:12px;
+  font-size:18px;
+  font-weight:700;
+}
+
+.small-note{
+  margin-top:8px;
+  font-size:12px;
+  color:#666;
+}
+
+@media(max-width:700px){
+  .buttons{
+    flex-direction:column;
+  }
+}
+
+@media print{
+  body{
+    background:#fff;
+    padding:0;
+  }
+
+  .container,
+  .preview-wrap{
+    display:none !important;
+  }
+}
+</style>
 </head>
+
 <body>
+
 <div class="container">
-  <h2>Parcel Label Generator</h2>
 
-  <label>Saved Addresses:</label>
-  <select id="savedAddresses" onchange="loadSelectedAddress()">
-    <option value="">-- Select Saved Address --</option>
-  </select>
+<h2>Parcel Label Generator</h2>
 
-  <label>To:</label>
-  <textarea id="toText" placeholder="Enter recipient address..."></textarea>
+<label>To:</label>
+<input id="toSearch" placeholder="Search saved address">
 
-  <label>From:</label>
-  <textarea id="fromText">AutoMekz Electronics,
+<select id="savedAddresses" onchange="loadSavedAddress()">
+<option value="">-- Select Saved Address --</option>
+</select>
+
+<textarea id="toText" placeholder="Enter recipient address"></textarea>
+
+<label>From:</label>
+
+<textarea id="fromText">AutoMekz Electronics,
 Flat No.2 Ram Heights, Laxmi Nagar,
 Mahale Farm, Cidco, Nashik,
 Maharashtra
 Pincode:- 422009
-Contact:- 9503298303/9765300065</textarea>
+Contact:- 9503298303 / 9765300065</textarea>
 
-  <div class="buttons">
-    <button onclick="saveAndPrint()">Print</button>
-    <button onclick="saveAndDownloadPDF()">Save as PDF</button>
-  </div>
+<div class="controls">
+
+<div>
+<label>Font</label>
+<select id="fontFamily">
+<option value="Times New Roman">Times New Roman</option>
+<option value="Roboto" selected>Roboto</option>
+<option value="Poppins">Poppins</option>
+<option value="Open Sans">Open Sans</option>
+<option value="Lato">Lato</option>
+<option value="Montserrat">Montserrat</option>
+<option value="Noto Serif">Noto Serif</option>
+<option value="Merriweather">Merriweather</option>
+<option value="Courier Prime">Courier Prime</option>
+<option value="Arial">Arial</option>
+</select>
 </div>
 
-<div class="preview-container">
-  <div class="label-page" id="labelPreview">
-    <div class="label-content" id="labelContent">
-      <div><h3>To,</h3><p id="previewTo"></p></div>
-      <div style="height:10mm;"></div>
-      <div><h3>From,</h3><p id="previewFrom"></p></div>
-    </div>
-  </div>
+<div>
+<label>Font Size (pt)</label>
+<input type="number" id="fontSize" value="16">
+</div>
+
+<div>
+<label>Line Spacing</label>
+<input type="number" id="lineSpacing" value="1.2" step="0.1">
+</div>
+
+<div>
+<label>Gap (px)</label>
+<input type="number" id="gapBetween" value="20">
+</div>
+
+</div>
+
+<div class="buttons">
+<button class="btn-blue" onclick="savePDF()">Save PDF</button>
+<button class="btn-green" onclick="printPDF()">Save & Print PDF</button>
+<button class="btn-red" onclick="printSafety()">Safety Label PDF</button>
+</div>
+
+<div class="small-note">
+Keep file "handle.png" in same folder as this HTML if you later want image mode.
+Current version uses vector HTML design for safety page.
+</div>
+
+</div>
+
+<div class="preview-wrap">
+<div class="label-page" id="labelPage">
+
+<div class="label-content" id="labelContent">
+
+<h3>To,</h3>
+<p id="previewTo"></p>
+
+<div id="gap"></div>
+
+<h3>From,</h3>
+<p id="previewFrom"></p>
+
+</div>
+</div>
+</div>
+
+<!-- Hidden Safety Page -->
+<div id="safetyPage">
+
+<div class="safety-grid">
+
+<div class="safe-card">
+<div class="safe-top">HANDLE<br>WITH CARE</div>
+<div class="safe-mid">
+<div class="safe-hands">👐</div>
+<div class="safe-text">THIS SIDE UP</div>
+<div class="safe-up">⬆</div>
+</div>
+<div class="safe-bottom">FRAGILE</div>
+</div>
+
+<div class="safe-card">
+<div class="safe-top">HANDLE<br>WITH CARE</div>
+<div class="safe-mid">
+<div class="safe-hands">👐</div>
+<div class="safe-text">THIS SIDE UP</div>
+<div class="safe-up">⬆</div>
+</div>
+<div class="safe-bottom">FRAGILE</div>
+</div>
+
+<div class="safe-card">
+<div class="safe-top">HANDLE<br>WITH CARE</div>
+<div class="safe-mid">
+<div class="safe-hands">👐</div>
+<div class="safe-text">THIS SIDE UP</div>
+<div class="safe-up">⬆</div>
+</div>
+<div class="safe-bottom">FRAGILE</div>
+</div>
+
+<div class="safe-card">
+<div class="safe-top">HANDLE<br>WITH CARE</div>
+<div class="safe-mid">
+<div class="safe-hands">👐</div>
+<div class="safe-text">THIS SIDE UP</div>
+<div class="safe-up">⬆</div>
+</div>
+<div class="safe-bottom">FRAGILE</div>
+</div>
+
+</div>
 </div>
 
 <script>
-  const GIST_ID = '9ec248dabac872195a6702a03778cfde'; // Replace this
-  const GITHUB_TOKEN = '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'; // Replace this
-  const API_URL = `https://api.github.com/gists/9ec248dabac872195a6702a03778cfde`;
+const STORAGE_KEY="parcel_saved_addresses_v1";
+const LEGACY_KEYS=["savedToAddresses","addr"];
 
-  async function loadAddresses() {
-    try {
-      const res = await fetch(API_URL, {
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-      });
-      const data = await res.json();
-      const content = data.files['parcel-addresses.json'].content;
-      const parsed = JSON.parse(content);
-      populateDropdown(parsed.addresses || []);
-    } catch (err) {
-      console.error("Failed to load addresses:", err);
+/* ---------- migrate old ---------- */
+function migrateOldAddresses(){
+
+  let merged=[];
+
+  try{
+    merged.push(...JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"));
+  }catch(e){}
+
+  LEGACY_KEYS.forEach(k=>{
+    try{
+      merged.push(...JSON.parse(localStorage.getItem(k)||"[]"));
+    }catch(e){}
+  });
+
+  const unique=[];
+
+  merged.forEach(a=>{
+    if(!a) return;
+
+    if(!unique.some(u=>u.toLowerCase()===a.toLowerCase())){
+      unique.push(a);
     }
+  });
+
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(unique));
+}
+
+/* ---------- preview ---------- */
+function updatePreview(){
+
+  const lc=document.getElementById("labelContent");
+
+  lc.style.fontFamily=document.getElementById("fontFamily").value;
+  lc.style.fontSize=document.getElementById("fontSize").value+"pt";
+  lc.style.lineHeight=document.getElementById("lineSpacing").value;
+
+  document.getElementById("gap").style.height=
+    document.getElementById("gapBetween").value+"px";
+
+  document.getElementById("previewTo").textContent=
+    document.getElementById("toText").value;
+
+  document.getElementById("previewFrom").textContent=
+    document.getElementById("fromText").value;
+}
+
+/* ---------- save address ---------- */
+function saveAddress(){
+
+  const txt=document.getElementById("toText").value.trim();
+
+  if(!txt) return;
+
+  let arr=[];
+
+  try{
+    arr=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
+  }catch(e){
+    arr=[];
   }
 
-  function populateDropdown(addresses) {
-    const dropdown = document.getElementById('savedAddresses');
-    dropdown.innerHTML = `<option value="">-- Select Saved Address --</option>`;
-    addresses.forEach(addr => {
-      const opt = document.createElement('option');
-      opt.value = addr;
-      opt.textContent = addr.split('\n')[0];
-      dropdown.appendChild(opt);
-    });
+  if(!arr.some(a=>a.toLowerCase()===txt.toLowerCase())){
+    arr.push(txt);
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(arr));
   }
 
-  function loadSelectedAddress() {
-    const val = document.getElementById('savedAddresses').value;
-    if (val) document.getElementById('toText').value = val;
-    updatePreview();
+  loadList();
+}
+
+/* ---------- load list ---------- */
+function loadList(){
+
+  const select=document.getElementById("savedAddresses");
+
+  select.innerHTML='<option value="">-- Select Saved Address --</option>';
+
+  let arr=[];
+
+  try{
+    arr=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
+  }catch(e){
+    arr=[];
   }
 
-  function updatePreview() {
-    document.getElementById("previewTo").innerHTML = document.getElementById("toText").value.replace(/\n/g, "<br>");
-    document.getElementById("previewFrom").innerHTML = document.getElementById("fromText").value.replace(/\n/g, "<br>");
-  }
+  const search=document.getElementById("toSearch").value.toLowerCase();
 
-  async function saveAddressIfNew() {
-    const newAddr = document.getElementById("toText").value.trim();
-    if (!newAddr) return;
-    try {
-      const res = await fetch(API_URL, {
-        headers: { 'Authorization': `token ${GITHUB_TOKEN}` }
-      });
-      const data = await res.json();
-      const file = data.files['parcel-addresses.json'];
-      const addresses = JSON.parse(file.content).addresses || [];
-      if (!addresses.includes(newAddr)) {
-        addresses.push(newAddr);
-        await fetch(API_URL, {
-          method: "PATCH",
-          headers: {
-            'Authorization': `token ${GITHUB_TOKEN}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            files: {
-              'parcel-addresses.json': {
-                content: JSON.stringify({ addresses }, null, 2)
-              }
-            }
-          })
-        });
-      }
-    } catch (err) {
-      console.error("Failed to save address:", err);
+  arr.forEach((a,i)=>{
+
+    const first=a.trim().split(/\s+/)[0].toLowerCase();
+
+    if(!search || first.includes(search)){
+
+      const op=document.createElement("option");
+      op.value=i;
+      op.textContent=a.split("\n")[0];
+      select.appendChild(op);
     }
+
+  });
+}
+
+/* ---------- load saved ---------- */
+function loadSavedAddress(){
+
+  const idx=document.getElementById("savedAddresses").value;
+
+  if(idx==="") return;
+
+  let arr=[];
+
+  try{
+    arr=JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]");
+  }catch(e){
+    arr=[];
   }
 
-  async function saveAndPrint() {
-    await saveAddressIfNew();
-    updatePreview();
-    const printWindow = window.open('', '', 'width=800,height=1000');
-    printWindow.document.write(`<html><head><title>Print</title></head><body>${document.getElementById("labelPreview").innerHTML}</body></html>`);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-  }
+  document.getElementById("toText").value=arr[idx] || "";
 
-  async function saveAndDownloadPDF() {
-    await saveAddressIfNew();
-    updatePreview();
-    const toLines = document.getElementById("toText").value.trim().split('\n');
-    const filename = `Parcel_${(toLines[0] || 'Label').split(' ')[0]}.pdf`;
-    html2pdf().set({
-      margin: 0,
-      filename: filename,
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }).from(document.getElementById("labelPreview")).save();
-  }
+  updatePreview();
+}
 
-  window.onload = () => {
-    updatePreview();
-    loadAddresses();
-  };
+/* ---------- parcel pdf ---------- */
+function savePDF(){
+
+  updatePreview();
+  saveAddress();
+
+  const page=document.getElementById("labelPage");
+
+  html2pdf().set({
+    margin:10,
+    filename:"Parcel_Label.pdf",
+    html2canvas:{scale:2},
+    jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+    pagebreak:{mode:"avoid-all"}
+  }).from(page).save();
+}
+
+/* ---------- parcel print ---------- */
+function printPDF(){
+
+  updatePreview();
+  saveAddress();
+
+  const page=document.getElementById("labelPage");
+
+  html2pdf().set({
+    margin:10,
+    filename:"Parcel_Label.pdf",
+    html2canvas:{scale:2},
+    jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+    pagebreak:{mode:"avoid-all"}
+  }).from(page).outputPdf("blob").then(blob=>{
+
+    const url=URL.createObjectURL(blob);
+    const w=window.open(url);
+
+    if(w){
+      w.onload=()=>w.print();
+    }
+
+  });
+}
+
+/* ---------- safety pdf ---------- */
+function printSafety(){
+
+  const page=document.getElementById("safetyPage");
+  page.style.display="block";
+
+  html2pdf().set({
+    margin:0,
+    filename:"Handle_With_Care.pdf",
+    html2canvas:{scale:2},
+    jsPDF:{unit:"mm",format:"a4",orientation:"portrait"},
+    pagebreak:{mode:"avoid-all"}
+  }).from(page).save().then(()=>{
+    page.style.display="none";
+  });
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll("input,textarea,select").forEach(el=>{
+  el.addEventListener("input",updatePreview);
+});
+
+document.getElementById("toSearch").addEventListener("input",loadList);
+
+/* ---------- init ---------- */
+window.onload=function(){
+
+  migrateOldAddresses();
+  loadList();
+  updatePreview();
+
+};
 </script>
+
 </body>
 </html>
