@@ -183,7 +183,50 @@ Contact:- 9503298303 / 9765300065</textarea>
 /* ================= STORAGE ================= */
 const STORAGE_KEY = "parcel_saved_addresses_v1";
 const LEGACY_KEYS = ["savedToAddresses", "addr"];
+/* ================= GOOGLE SHEETS POST ================= */
 
+const GOOGLE_SHEET_API =
+  "https://script.google.com/macros/s/AKfycbx3CA8K8IgD5X0heh1Z6jIcmzdqubyXtwM_0XGHAar-PJAznq5BIumIbsgIYtM9FOAh/exec";
+
+let sheetPostInProgress = false;
+
+async function saveRecipientToSheet() {
+  const address = toText.value.trim();
+
+  if (!address) {
+    alert("Please enter recipient address");
+    return;
+  }
+
+  if (sheetPostInProgress) {
+    console.log("POST already in progress");
+    return;
+  }
+
+  sheetPostInProgress = true;
+
+  try {
+    await fetch(GOOGLE_SHEET_API, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        address: address
+      })
+    });
+
+    console.log("Recipient POST sent to Google Sheets");
+
+  } catch (error) {
+    console.error("Google Sheets POST failed:", error);
+    alert("Unable to send recipient address to Google Sheets.");
+
+  } finally {
+    sheetPostInProgress = false;
+  }
+}
 function migrateOldAddresses() {
   let merged = [];
   merged.push(...JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
@@ -252,31 +295,46 @@ function loadSavedAddress() {
 }
 
 /* ================= PDF ================= */
-function savePDF() {
+async function savePDF() {
   updatePreview();
   saveAddress();
+
+  await saveRecipientToSheet();
 
   html2pdf().set({
     margin: 10,
     html2canvas: { scale: 2 },
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    },
     pagebreak: { mode: "avoid-all" }
   }).from(labelPage).save("Parcel_Label.pdf");
 }
 
-function printPDF() {
+async function printPDF() {
   updatePreview();
   saveAddress();
+
+  await saveRecipientToSheet();
 
   html2pdf().set({
     margin: 10,
     html2canvas: { scale: 2 },
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    },
     pagebreak: { mode: "avoid-all" }
   }).from(labelPage).outputPdf("blob").then(blob => {
     const url = URL.createObjectURL(blob);
     const w = window.open(url);
-    if (w) w.onload = () => w.print();
+
+    if (w) {
+      w.onload = () => w.print();
+    }
   });
 }
 
