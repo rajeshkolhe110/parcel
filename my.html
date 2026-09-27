@@ -183,98 +183,7 @@ Contact:- 9503298303 / 9765300065</textarea>
 /* ================= STORAGE ================= */
 const STORAGE_KEY = "parcel_saved_addresses_v1";
 const LEGACY_KEYS = ["savedToAddresses", "addr"];
-/* ================= GOOGLE SHEETS POST ================= */
 
-const GOOGLE_SHEET_API =
-  "https://script.google.com/macros/s/AKfycbx3CA8K8IgD5X0heh1Z6jIcmzdqubyXtwM_0XGHAar-PJAznq5BIumIbsgIYtM9FOAh/exec";
-
-let sheetPostInProgress = false;
-
-async function saveRecipientToSheet() {
-  const address = toText.value.trim();
-
-  if (!address) {
-    alert("Please enter recipient address");
-    return;
-  }
-
-  if (sheetPostInProgress) {
-    console.log("POST already in progress");
-    return;
-  }
-
-  sheetPostInProgress = true;
-
-  try {
-    await fetch(GOOGLE_SHEET_API, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      },
-      body: JSON.stringify({
-        address: address
-      })
-    });
-
-    console.log("Recipient POST sent to Google Sheets");
-
-  } catch (error) {
-    console.error("Google Sheets POST failed:", error);
-    alert("Unable to send recipient address to Google Sheets.");
-
-  } finally {
-    sheetPostInProgress = false;
-  }
-}
-
-/* ============== GOOGLE SHEETS ADDRESS LIST ============== */
-
-let sheetAddresses = [];
-
-function fetchSheetAddresses() {
-  return new Promise((resolve, reject) => {
-    const callbackName =
-      "sheetCallback_" + Date.now() + "_" +
-      Math.floor(Math.random() * 10000);
-
-    const script = document.createElement("script");
-
-    const timeout = setTimeout(() => {
-      cleanup();
-      reject(new Error("Google Sheets address loading timed out"));
-    }, 15000);
-
-    function cleanup() {
-      clearTimeout(timeout);
-      delete window[callbackName];
-      script.remove();
-    }
-
-    window[callbackName] = function(data) {
-      cleanup();
-
-      sheetAddresses = Array.isArray(data)
-        ? [...new Set(data.filter(a => typeof a === "string" && a.trim()))]
-        : [];
-
-      loadList();
-      resolve(sheetAddresses);
-    };
-
-    script.onerror = function() {
-      cleanup();
-      reject(new Error("Could not load addresses from Google Sheets"));
-    };
-
-    script.src =
-      GOOGLE_SHEET_API +
-      "?callback=" + encodeURIComponent(callbackName);
-
-    document.body.appendChild(script);
-  });
-}
-  
 function migrateOldAddresses() {
   let merged = [];
   merged.push(...JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
@@ -321,72 +230,53 @@ function loadList() {
   savedAddresses.innerHTML =
     `<option value="">-- Select Saved Address --</option>`;
 
-  const search = toSearch.value.trim().toLowerCase();
+  const search = toSearch.value.toLowerCase();
+  const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
 
-  sheetAddresses.forEach((address, i) => {
-    if (!search || address.toLowerCase().includes(search)) {
-      const option = document.createElement("option");
-
-      option.value = i;
-      option.textContent = address.split("\n")[0];
-      option.title = address;
-
-      savedAddresses.appendChild(option);
+  arr.forEach((a, i) => {
+    const first = a.trim().split(/\s+/)[0].toLowerCase();
+    if (!search || first.includes(search)) {
+      const o = document.createElement("option");
+      o.value = i;
+      o.textContent = a.split("\n")[0];
+      savedAddresses.appendChild(o);
     }
   });
 }
 
 function loadSavedAddress() {
   const i = savedAddresses.value;
-
   if (i === "") return;
-
-  toText.value = sheetAddresses[Number(i)];
-
+  toText.value = JSON.parse(localStorage.getItem(STORAGE_KEY))[i];
   updatePreview();
 }
 
 /* ================= PDF ================= */
-async function savePDF() {
+function savePDF() {
   updatePreview();
   saveAddress();
-
-  await saveRecipientToSheet();
 
   html2pdf().set({
     margin: 10,
     html2canvas: { scale: 2 },
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait"
-    },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     pagebreak: { mode: "avoid-all" }
   }).from(labelPage).save("Parcel_Label.pdf");
 }
 
-async function printPDF() {
+function printPDF() {
   updatePreview();
   saveAddress();
-
-  await saveRecipientToSheet();
 
   html2pdf().set({
     margin: 10,
     html2canvas: { scale: 2 },
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait"
-    },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     pagebreak: { mode: "avoid-all" }
   }).from(labelPage).outputPdf("blob").then(blob => {
     const url = URL.createObjectURL(blob);
     const w = window.open(url);
-
-    if (w) {
-      w.onload = () => w.print();
-    }
+    if (w) w.onload = () => w.print();
   });
 }
 
@@ -396,19 +286,10 @@ document.querySelectorAll("input,textarea,select")
 
 toSearch.addEventListener("input", loadList);
 
-window.onload = async () => {
+window.onload = () => {
   migrateOldAddresses();
-
   loadList();
   updatePreview();
-
-  try {
-    await fetchSheetAddresses();
-    console.log("Google Sheets addresses loaded:", sheetAddresses.length);
-  } catch (error) {
-    console.error(error);
-    alert("Unable to load addresses from Google Sheets.");
-  }
 };
 </script>
 
