@@ -227,6 +227,54 @@ async function saveRecipientToSheet() {
     sheetPostInProgress = false;
   }
 }
+
+/* ============== GOOGLE SHEETS ADDRESS LIST ============== */
+
+let sheetAddresses = [];
+
+function fetchSheetAddresses() {
+  return new Promise((resolve, reject) => {
+    const callbackName =
+      "sheetCallback_" + Date.now() + "_" +
+      Math.floor(Math.random() * 10000);
+
+    const script = document.createElement("script");
+
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error("Google Sheets address loading timed out"));
+    }, 15000);
+
+    function cleanup() {
+      clearTimeout(timeout);
+      delete window[callbackName];
+      script.remove();
+    }
+
+    window[callbackName] = function(data) {
+      cleanup();
+
+      sheetAddresses = Array.isArray(data)
+        ? [...new Set(data.filter(a => typeof a === "string" && a.trim()))]
+        : [];
+
+      loadList();
+      resolve(sheetAddresses);
+    };
+
+    script.onerror = function() {
+      cleanup();
+      reject(new Error("Could not load addresses from Google Sheets"));
+    };
+
+    script.src =
+      GOOGLE_SHEET_API +
+      "?callback=" + encodeURIComponent(callbackName);
+
+    document.body.appendChild(script);
+  });
+}
+  
 function migrateOldAddresses() {
   let merged = [];
   merged.push(...JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"));
@@ -273,24 +321,28 @@ function loadList() {
   savedAddresses.innerHTML =
     `<option value="">-- Select Saved Address --</option>`;
 
-  const search = toSearch.value.toLowerCase();
-  const arr = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+  const search = toSearch.value.trim().toLowerCase();
 
-  arr.forEach((a, i) => {
-    const first = a.trim().split(/\s+/)[0].toLowerCase();
-    if (!search || first.includes(search)) {
-      const o = document.createElement("option");
-      o.value = i;
-      o.textContent = a.split("\n")[0];
-      savedAddresses.appendChild(o);
+  sheetAddresses.forEach((address, i) => {
+    if (!search || address.toLowerCase().includes(search)) {
+      const option = document.createElement("option");
+
+      option.value = i;
+      option.textContent = address.split("\n")[0];
+      option.title = address;
+
+      savedAddresses.appendChild(option);
     }
   });
 }
 
 function loadSavedAddress() {
   const i = savedAddresses.value;
+
   if (i === "") return;
-  toText.value = JSON.parse(localStorage.getItem(STORAGE_KEY))[i];
+
+  toText.value = sheetAddresses[Number(i)];
+
   updatePreview();
 }
 
@@ -344,10 +396,19 @@ document.querySelectorAll("input,textarea,select")
 
 toSearch.addEventListener("input", loadList);
 
-window.onload = () => {
+window.onload = async () => {
   migrateOldAddresses();
+
   loadList();
   updatePreview();
+
+  try {
+    await fetchSheetAddresses();
+    console.log("Google Sheets addresses loaded:", sheetAddresses.length);
+  } catch (error) {
+    console.error(error);
+    alert("Unable to load addresses from Google Sheets.");
+  }
 };
 </script>
 
