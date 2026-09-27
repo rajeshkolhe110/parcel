@@ -1,0 +1,515 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parcel Label Generator</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Roboto&family=Poppins&family=Open+Sans&family=Lato&family=Montserrat&family=Noto+Serif&family=Merriweather&family=Courier+Prime&display=swap" rel="stylesheet">
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Roboto, sans-serif;
+  background: #eef1f5;
+  padding: 20px;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.1);
+}
+
+label {
+  font-weight: bold;
+  margin-top: 12px;
+  display: block;
+}
+
+textarea, input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 6px;
+  margin-bottom: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+  gap: 14px;
+}
+
+.buttons {
+  text-align: center;
+  margin-top: 20px;
+}
+
+button {
+  padding: 10px 26px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: none;
+  background: #007bff;
+  color: white;
+  cursor: pointer;
+  margin: 5px;
+}
+
+button:hover {
+  background: #0056b3;
+}
+
+button:disabled {
+  opacity: .6;
+  cursor: wait;
+}
+
+#statusMessage {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+.preview-container {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+}
+
+.label-page {
+  width: 210mm;
+  min-width: 210mm;
+  background: white;
+  color: #000;
+}
+
+.label-content {
+  padding: 60px;
+  box-sizing: border-box;
+}
+
+.label-content h3 {
+  margin: 0 0 6px 0;
+  font-weight: bold;
+}
+
+.label-content p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media print {
+  body {
+    background: none;
+    padding: 0;
+  }
+
+  .container {
+    display: none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Parcel Label Generator</h2>
+
+  <label>To:</label>
+
+  <input id="toSearch" placeholder="Search saved address">
+
+  <select id="savedAddresses">
+    <option value="">-- Select Saved Address --</option>
+  </select>
+
+  <textarea id="toText" placeholder="Enter recipient address"></textarea>
+
+  <label>From:</label>
+
+  <textarea id="fromText">AutoMekz Electronics,
+Flat No.2 Ram Heights, Laxmi Nagar,
+Mahale Farm, Cidco, Nashik,
+Maharashtra
+Pincode:- 422009
+Contact:- 9503298303 / 9765300065</textarea>
+
+  <div class="controls">
+    <div>
+      <label>Font</label>
+      <select id="fontFamily">
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Roboto" selected>Roboto</option>
+        <option value="Poppins">Poppins</option>
+        <option value="Open Sans">Open Sans</option>
+        <option value="Lato">Lato</option>
+        <option value="Montserrat">Montserrat</option>
+        <option value="Noto Serif">Noto Serif</option>
+        <option value="Merriweather">Merriweather</option>
+        <option value="Courier Prime">Courier Prime</option>
+        <option value="Arial">Arial</option>
+      </select>
+    </div>
+
+    <div>
+      <label>Font Size (pt)</label>
+      <input type="number" id="fontSize" value="16">
+    </div>
+
+    <div>
+      <label>Line Spacing</label>
+      <input type="number" id="lineSpacing" value="1" step="0.1">
+    </div>
+
+    <div>
+      <label>Gap (px)</label>
+      <input type="number" id="gapBetween" value="20">
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button id="savePdfBtn" onclick="savePDF()">Save PDF</button>
+    <button id="printPdfBtn" onclick="printPDF()">Save &amp; Print PDF</button>
+  </div>
+
+  <div id="statusMessage"></div>
+</div>
+
+<div class="preview-container">
+  <div class="label-page" id="labelPage">
+    <div class="label-content" id="labelContent">
+      <h3>To,</h3>
+      <p id="previewTo"></p>
+
+      <div id="gap"></div>
+
+      <h3>From,</h3>
+      <p id="previewFrom"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================
+   GOOGLE SHEETS CONFIGURATION
+   Replace this URL with your deployed Apps Script URL.
+   ===================================================== */
+
+const GOOGLE_SHEETS_URL = "https://script.google.com/macros/s/AKfycbyrndWc8Z8UaB9-m8VqTjmWlym_u5Njvt0NTP2tcD7Xsrx-LEOmWoIY0AqiDkAloulJ/exec";
+
+/* =====================================================
+   LOCAL ADDRESS STORAGE
+   ===================================================== */
+
+const STORAGE_KEY = "parcel_saved_addresses_v1";
+const LEGACY_KEYS = ["savedToAddresses", "addr"];
+
+function readAddressArray(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(value) ? value.filter(a => typeof a === "string") : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function migrateOldAddresses() {
+  const merged = [
+    ...readAddressArray(STORAGE_KEY)
+  ];
+
+  LEGACY_KEYS.forEach(key => {
+    merged.push(...readAddressArray(key));
+  });
+
+  const unique = [];
+
+  merged.forEach(address => {
+    if (
+      address.trim() &&
+      !unique.some(item => item.toLowerCase() === address.toLowerCase())
+    ) {
+      unique.push(address);
+    }
+  });
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
+}
+
+/* =====================================================
+   PREVIEW
+   ===================================================== */
+
+function updatePreview() {
+  const labelContent = document.getElementById("labelContent");
+
+  labelContent.style.fontFamily = document.getElementById("fontFamily").value;
+  labelContent.style.fontSize =
+    document.getElementById("fontSize").value + "pt";
+
+  labelContent.style.lineHeight =
+    document.getElementById("lineSpacing").value;
+
+  document.getElementById("gap").style.height =
+    document.getElementById("gapBetween").value + "px";
+
+  document.getElementById("previewTo").textContent =
+    document.getElementById("toText").value;
+
+  document.getElementById("previewFrom").textContent =
+    document.getElementById("fromText").value;
+}
+
+/* =====================================================
+   LOCAL ADDRESS BOOK
+   ===================================================== */
+
+function saveAddress() {
+  const txt = document.getElementById("toText").value.trim();
+
+  if (!txt) return;
+
+  const arr = readAddressArray(STORAGE_KEY);
+
+  if (!arr.some(a => a.toLowerCase() === txt.toLowerCase())) {
+    arr.push(txt);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+
+  loadList();
+}
+
+function loadList() {
+  const select = document.getElementById("savedAddresses");
+  const search = document.getElementById("toSearch").value.toLowerCase();
+
+  select.innerHTML =
+    '<option value="">-- Select Saved Address --</option>';
+
+  const arr = readAddressArray(STORAGE_KEY);
+
+  arr.forEach((address, index) => {
+    const first = address.trim().split(/\s+/)[0].toLowerCase();
+
+    if (!search || first.includes(search)) {
+      const option = document.createElement("option");
+      option.value = index;
+      option.textContent = address.split("\n")[0];
+      select.appendChild(option);
+    }
+  });
+}
+
+function loadSavedAddress() {
+  const index = document.getElementById("savedAddresses").value;
+
+  if (index === "") return;
+
+  const arr = readAddressArray(STORAGE_KEY);
+  const address = arr[Number(index)];
+
+  if (address !== undefined) {
+    document.getElementById("toText").value = address;
+    updatePreview();
+  }
+}
+
+/* =====================================================
+   GOOGLE SHEETS: SAVE RECIPIENT ONLY
+   ===================================================== */
+
+async function saveRecipientToSheet() {
+  const recipient = document.getElementById("toText").value.trim();
+
+  if (!recipient) {
+    return;
+  }
+
+  if (
+    !GOOGLE_SHEETS_URL ||
+    GOOGLE_SHEETS_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL"
+  ) {
+    console.warn("Google Sheets URL is not configured.");
+    return;
+  }
+
+  const formData = new URLSearchParams();
+  formData.append("recipient", recipient);
+
+  try {
+    await fetch(GOOGLE_SHEETS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: formData
+    });
+
+    console.log("Recipient save request sent to Google Sheets.");
+  } catch (error) {
+    console.error("Google Sheets request failed:", error);
+  }
+}
+
+/* =====================================================
+   PDF OPTIONS
+   ===================================================== */
+
+function getPdfOptions() {
+  return {
+    margin: 10,
+    filename: "Parcel_Label.pdf",
+    image: {
+      type: "jpeg",
+      quality: 0.98
+    },
+    html2canvas: {
+      scale: 2,
+      useCORS: true
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
+    },
+    pagebreak: {
+      mode: "avoid-all"
+    }
+  };
+}
+
+/* =====================================================
+   BUTTON STATUS
+   ===================================================== */
+
+function setBusy(busy, message = "") {
+  document.getElementById("savePdfBtn").disabled = busy;
+  document.getElementById("printPdfBtn").disabled = busy;
+  document.getElementById("statusMessage").textContent = message;
+}
+
+/* =====================================================
+   SAVE PDF
+   ===================================================== */
+
+async function savePDF() {
+  updatePreview();
+
+  if (!document.getElementById("toText").value.trim()) {
+    alert("Please enter recipient details.");
+    return;
+  }
+
+  setBusy(true, "Generating PDF...");
+
+  try {
+    saveAddress();
+
+    // Send recipient details to Google Sheets.
+    await saveRecipientToSheet();
+
+    await html2pdf()
+      .set(getPdfOptions())
+      .from(document.getElementById("labelPage"))
+      .save();
+
+    setBusy(false, "PDF generated.");
+  } catch (error) {
+    console.error(error);
+    setBusy(false, "PDF generation failed.");
+    alert("Unable to generate PDF.");
+  }
+}
+
+/* =====================================================
+   SAVE & PRINT PDF
+   ===================================================== */
+
+async function printPDF() {
+  updatePreview();
+
+  if (!document.getElementById("toText").value.trim()) {
+    alert("Please enter recipient details.");
+    return;
+  }
+
+  setBusy(true, "Generating PDF...");
+
+  try {
+    saveAddress();
+
+    // Send recipient details to Google Sheets.
+    await saveRecipientToSheet();
+
+    const blob = await html2pdf()
+      .set(getPdfOptions())
+      .from(document.getElementById("labelPage"))
+      .outputPdf("blob");
+
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url);
+
+    if (win) {
+      win.onload = () => {
+        win.print();
+      };
+    } else {
+      // If popup is blocked, download the PDF instead.
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "Parcel_Label.pdf";
+      link.click();
+    }
+
+    setBusy(false, "PDF generated.");
+  } catch (error) {
+    console.error(error);
+    setBusy(false, "PDF generation failed.");
+    alert("Unable to generate PDF.");
+  }
+}
+
+/* =====================================================
+   EVENTS
+   ===================================================== */
+
+document.querySelectorAll("input, textarea, select")
+  .forEach(element => {
+    element.addEventListener("input", updatePreview);
+    element.addEventListener("change", updatePreview);
+  });
+
+document.getElementById("toSearch")
+  .addEventListener("input", loadList);
+
+document.getElementById("savedAddresses")
+  .addEventListener("change", loadSavedAddress);
+
+window.onload = () => {
+  migrateOldAddresses();
+  loadList();
+  updatePreview();
+};
+</script>
+
+</body>
+</html>
